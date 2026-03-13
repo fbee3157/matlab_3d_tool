@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IC价格三维走势分析工具 - 在线预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        
+        .main {
+            flex: 1;
+            padding: 25px;
+            background: white;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .color-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid #dee2e6;
+        }
+        
+        .color-input {
+            flex: 1;
+        }
+        
+        .ic-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s;
+        }
+        
+        .ic-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preview-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .code-preview {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preview-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%);
+            animation: shine 2s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .preview-text {
+            text-align: center;
+            z-index: 1;
+        }
+        
+        .preview-text h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            background: #e9ecef;
+            padding: 15px 25px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .download-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .download-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>IC价格三维走势分析工具</h1>
+            <p>使用MATLAB plot3函数绘制三维走势图 - 在线预览与配置</p>
+        </div>
+        
+        <div class="content">
+            <div class="sidebar">
+                <div class="section">
+                    <h3 class="section-title">基本设置</h3>
+                    
+                    <div class="form-group">
+                        <label for="timeScale">时间尺度</label>
+                        <select id="timeScale">
+                            <option value="day">按日显示</option>
+                            <option value="week" selected>按周显示</option>
+                            <option value="month">按月显示</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="totalDays">总天数</label>
+                        <input type="number" id="totalDays" value="365">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="startDate">起始日期</label>
+                        <input type="text" id="startDate" value="2026-01-01">
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">IC型号配置</h3>
+                    <div id="icList">
+                        <!-- IC项目将通过JavaScript动态添加 -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="addIC()" style="width: 100%;">
+                        <span>+</span> 添加IC型号
+                    </button>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">图形设置</h3>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showGrid" checked> 显示网格
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showSupport" checked> 显示支撑/阻力位
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lineWidth">线条宽度</label>
+                        <input type="number" id="lineWidth" value="2.5" step="0.1" min="1" max="5">
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn" onclick="generateCode()">
+                        <span>⚡</span> 生成MATLAB代码
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetConfig()">
+                        <span>↺</span> 重置设置
+                    </button>
+                </div>
+            </div>
+            
+            <div class="main">
+                <div class="preview-section">
+                    <h3 class="section-title">图形预览</h3>
+                    <div class="preview-image">
+                        <div class="preview-text">
+                            <h3>三维走势图预览</h3>
+                            <p>配置参数后，点击"生成MATLAB代码"按钮</p>
+                            <p>生成完整的MATLAB脚本，可在本地运行</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title" style="margin-top: 30px;">MATLAB代码预览</h3>
+                    <div class="code-preview" id="codePreview">
+%% 请先配置参数，然后点击"生成MATLAB代码"按钮
+%% 这里将显示生成的MATLAB代码
+
+% 当前配置：
+% - 时间尺度：周
+% - IC型号：STM32F103, ATmega328P, ESP32
+% - 总天数：365
+% - 起始日期：2026-01-01
+
+% 点击生成按钮开始...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>就绪</span>
+            </div>
+            <div>
+                <a href="#" class="download-link" onclick="downloadCode()">
+                    <span>⬇</span> 下载MATLAB脚本 (.m文件)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 默认IC配置
+        let ics = [
+            { name: 'STM32F103', color: '#3366CC', basePrice: 8.5, support: 7.0, resistance: 10.0, baseHeat: 50000 },
+            { name: 'ATmega328P', color: '#DC3912', basePrice: 3.2, support: 2.5, resistance: 4.0, baseHeat: 30000 },
+            { name: 'ESP32', color: '#FF9900', basePrice: 12.8, support: 10.0, resistance: 15.0, baseHeat: 80000 }
+        ];
+
+        // 颜色选项
+        const colorOptions = [
+            '#3366CC', '#DC3912', '#FF9900', '#109618', '#990099',
+            '#0099C6', '#DD4477', '#66AA00', '#B82E2E', '#316395'
+        ];
+
+        // 初始化IC列表
+        function initICList() {
+            const icList = document.getElementById('icList');
+            icList.innerHTML = '';
+            ics.forEach((ic, index) => {
+                const icItem = document.createElement('div');
+                icItem.className = 'ic-item';
+                icItem.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>${ic.name}</strong>
+                        <button onclick="removeIC(${index})" style="background: none; border: none; color: #dc3545; cursor: pointer; font-size: 18px;">×</button>
+                    </div>
+                    <div class="form-group">
+                        <label>型号名称</label>
+                        <input type="text" value="${ic.name}" onchange="updateIC(${index}, 'name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <div class="color-picker">
+                            <div class="color-box" style="background: ${ic.color};" onclick="showColorPicker(${index})"></div>
+                            <input type="text" class="color-input" value="${ic.color}" onchange="updateIC(${index}, 'color', this.value)">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>基准价格</label>
+                            <input type="number" value="${ic.basePrice}" step="0.1" onchange="updateIC(${index}, 'basePrice', parseFloat(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label>月搜索量</label>
+                            <input type="number" value="${ic.baseHeat}" step="1000" onchange="updateIC(${index}, 'baseHeat', parseFloat(this.value))">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>支撑位</label>
+                            <input type="number" value="${ic.support}" step="0.1" onchange="updateIC(${index}, 'support', parseFloat(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label>阻力位</label>
+                            <input type="number" value="${ic.resistance}" step="0.1" onchange="updateIC(${index}, 'resistance', parseFloat(this.value))">
+                        </div>
+                    </div>
+                `;
+                icList.appendChild(icItem);
+            });
+        }
+
+        // 添加IC
+        function addIC() {
+            const newColor = colorOptions[ics.length % colorOptions.length];
+            ics.push({
+                name: `IC_${ics.length + 1}`,
+                color: newColor,
+                basePrice: 10.0,
+                support: 8.0,
+                resistance: 12.0,
+                baseHeat: 50000
+            });
+            initICList();
+        }
+
+        // 移除IC
+        function removeIC(index) {
+            ics.splice(index, 1);
+            initICList();
+        }
+
+        // 更新IC
+        function updateIC(index, field, value) {
+            ics[index][field] = value;
+            if (field === 'color') {
+                // 更新颜色框
+                const colorBox = document.querySelectorAll('.ic-item')[index].querySelector('.color-box');
+                if (colorBox) {
+                    colorBox.style.backgroundColor = value;
+                }
+            }
+        }
+
+        // 显示颜色选择器
+        function showColorPicker(index) {
+            const color = prompt('请输入颜色代码（如 #3366CC 或 rgb(51,102,204)）：', ics[index].color);
+            if (color) {
+                updateIC(index, 'color', color);
+            }
+        }
+
+        // 生成MATLAB代码
+        function generateCode() {
+            const timeScale = document.getElementById('timeScale').value;
+            const totalDays = parseInt(document.getElementById('totalDays').value);
+            const startDate = document.getElementById('startDate').value;
+            const showGrid = document.getElementById('showGrid').checked;
+            const showSupport = document.getElementById('showSupport').checked;
+            const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+
+            // 生成颜色矩阵代码
+            const colorCode = ics.map(ic => {
+                // 将HEX颜色转换为MATLAB格式
+                const hex = ic.color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16) / 255;
+                const g = parseInt(hex.substr(2, 2), 16) / 255;
+                const b = parseInt(hex.substr(4, 2), 16) / 255;
+                return `[${r.toFixed(2)} ${g.toFixed(2)} ${b.toFixed(2)}]`;
+            }).join('; ');
+
+            // 生成名称数组
+            const nameCode = ics.map(ic => `'${ic.name}'`).join(', ');
+
+            // 生成价格数组
+            const priceCode = ics.map(ic => ic.basePrice.toFixed(1)).join(', ');
+            const supportCode = ics.map(ic => ic.support.toFixed(1)).join(', ');
+            const resistanceCode = ics.map(ic => ic.resistance.toFixed(1)).join(', ');
+            const heatCode = ics.map(ic => Math.round(ic.baseHeat)).join(', ');
+
+            // 生成完整的MATLAB代码
+            const matlabCode = `%% IC价格三维走势分析工具
+% 作者：在线配置工具生成
+% 日期：${new Date().toISOString().split('T')[0]}
+% 配置参数：
+%   - 时间尺度: ${timeScale}
+%   - IC数量: ${ics.length}
+%   - 总天数: ${totalDays}
+%   - 起始日期: ${startDate}
+
+clear; close all; clc;
+
+%% ===================== 参数设置区 =====================
+% 由在线配置工具生成的参数
+
+% 1. IC型号配置
+ic_names = {${nameCode}};
+ic_colors = [${colorCode}];  % 自定义颜色矩阵
+
+% 2. 时间轴设置
+total_days = ${totalDays};  % 总天数
+time_scale = '${timeScale}';  % 时间尺度
+start_date = datetime('${startDate}');  % 起始日期
+
+% 3. 价格参数设置
+base_prices = [${priceCode}];  % 基准价格(元)
+price_volatility = 0.15;  % 价格波动率
+support_levels = [${supportCode}];  % 支撑位价格
+resistance_levels = [${resistanceCode}];  % 阻力位价格
+
+% 4. 热度参数设置
+base_heat = [${heatCode}];  % 基准月搜索量
+heat_volatility = 0.2;  % 热度波动率
+
+% 5. 图形参数设置
+enable_grid = ${showGrid ? 'true' : 'false'};  % 是否显示网格
+show_support_resistance = ${showSupport ? 'true' : 'false'};  % 是否显示支撑阻力位
+line_width = ${lineWidth};  % 线条宽度
+marker_size = 30;  % 数据点标记大小
+font_size = 14;  % 字体大小
+
+%% ===================== 数据生成模块 =====================
+fprintf('正在生成模拟数据...\\n');
+
+% 生成时间序列
+T = days(1:total_days);  % 天数序列
+date_sequence = start_date + T;
+
+% 初始化数据存储
+num_ics = length(ic_names);
+price_data = zeros(num_ics, total_days);
+heat_data = zeros(num_ics, total_days);
+
+% 为每个IC生成价格和热度数据
+for i = 1:num_ics
+    % 生成基础价格趋势（随机游走）
+    price_walk = cumsum(randn(1, total_days) * price_volatility);
+    price_data(i, :) = base_prices(i) * exp(price_walk);
+    
+    % 生成季节性热度波动
+    seasonal_factor = 0.3 * sin(2*pi*(1:total_days)/365) + ...
+                      0.2 * sin(4*pi*(1:total_days)/365) + ...
+                      0.1 * sin(6*pi*(1:total_days)/365);
+    
+    % 生成随机热度波动
+    heat_walk = cumsum(randn(1, total_days) * heat_volatility);
+    heat_data(i, :) = base_heat(i) * exp(0.1 * seasonal_factor + 0.05 * heat_walk);
+end
+
+fprintf('数据生成完成！共生成 %d 个IC型号，时间跨度 %d 天\\n', num_ics, total_days);
+
+%% ===================== 时间轴处理模块 =====================
+fprintf('正在处理时间轴...\\n');
+
+switch time_scale
+    case 'day'
+        display_points = 1:total_days;
+        x_label_text = '天数';
+        time_factor = 1;
+        
+    case 'week'
+        weeks = ceil(total_days/7);
+        display_points = zeros(1, weeks);
+        for w = 1:weeks
+            start_day = (w-1)*7 + 1;
+            end_day = min(w*7, total_days);
+            display_points(w) = end_day;
+        end
+        x_label_text = '周数';
+        time_factor = 7;
+        
+    case 'month'
+        months = ceil(total_days/30);
+        display_points = zeros(1, months);
+        for m = 1:months
+            start_day = (m-1)*30 + 1;
+            end_day = min(m*30, total_days);
+            display_points(m) = end_day;
+        end
+        x_label_text = '月数';
+        time_factor = 30;
+end
+
+fprintf('时间尺度: %s，显示点数: %d\\n', time_scale, length(display_points));
+
+%% ===================== 图形绘制模块 =====================
+fprintf('正在创建三维图形...\\n');
+
+figure('Name', 'IC价格三维走势分析', 'Position', [100, 100, 1400, 800], ...
+       'Color', [0.96 0.96 0.96], 'NumberTitle', 'off');
+
+ax = axes('Parent', gcf);
+hold(ax, 'on');
+grid(ax, 'on');
+
+% 绘制每个IC的三维走势线
+legend_handles = [];
+for i = 1:num_ics
+    X = display_points / time_factor;
+    Y = heat_data(i, display_points) / 1000;
+    Z = price_data(i, display_points);
+    
+    h = plot3(X, Y, Z, ...
+        'LineWidth', line_width, ...
+        'Color', ic_colors(i, :), ...
+        'Marker', 'o', ...
+        'MarkerSize', 6, ...
+        'MarkerFaceColor', ic_colors(i, :));
+    
+    scatter3(X, Y, Z, marker_size, ic_colors(i, :), 'filled', ...
+        'MarkerEdgeColor', 'k', 'LineWidth', 1);
+    
+    legend_handles = [legend_handles, h];
+end
+
+%% ===================== 支撑阻力位绘制模块 =====================
+if show_support_resistance
+    fprintf('正在绘制支撑阻力位...\\n');
+    
+    x_lim = xlim;
+    y_lim = ylim;
+    
+    for i = 1:num_ics
+        % 支撑位
+        [xs, ys] = meshgrid(x_lim, y_lim);
+        zs_support = ones(size(xs)) * support_levels(i);
+        surf(xs, ys, zs_support, ...
+            'FaceColor', [0 0.8 0], ...
+            'FaceAlpha', 0.1, ...
+            'EdgeColor', 'none');
+        
+        % 阻力位
+        zs_resistance = ones(size(xs)) * resistance_levels(i);
+        surf(xs, ys, zs_resistance, ...
+            'FaceColor', [0.8 0 0], ...
+            'FaceAlpha', 0.1, ...
+            'EdgeColor', 'none');
+    end
+end
+
+%% ===================== 图形美化模块 =====================
+fprintf('正在美化图形...\\n');
+
+xlabel(ax, x_label_text, 'FontSize', font_size, 'FontWeight', 'bold');
+ylabel(ax, '月搜索量 (千次)', 'FontSize', font_size, 'FontWeight', 'bold');
+zlabel(ax, '价格 (元)', 'FontSize', font_size, 'FontWeight', 'bold');
+title(ax, sprintf('IC价格三维走势分析 - 时间尺度: %s', upper(time_scale)), ...
+    'FontSize', font_size+2, 'FontWeight', 'bold');
+
+legend(ax, legend_handles, ic_names, ...
+    'Location', 'best', ...
+    'FontSize', font_size-2, ...
+    'Box', 'off');
+
+view(ax, 45, 30);
+
+if enable_grid
+    grid(ax, 'on');
+    grid(ax, 'minor');
+else
+    grid(ax, 'off');
+end
+
+ax.GridColor = [0.3 0.3 0.3];
+ax.GridAlpha = 0.3;
+ax.Box = 'on';
+
+hold(ax, 'off');
+
+%% ===================== 信息输出模块 =====================
+fprintf('\\n========== 分析完成 ==========\\n');
+fprintf('图形已成功生成！\\n\\n');
+
+fprintf('当前设置:\\n');
+fprintf('  - IC型号: %s\\n', strjoin(ic_names, ', '));
+fprintf('  - 时间尺度: %s\\n', time_scale);
+fprintf('  - 总天数: %d\\n', total_days);
+fprintf('  - 起始日期: %s\\n', datestr(start_date, 'yyyy-mm-dd'));
+
+fprintf('\\n最新数据 (最后一天):\\n');
+fprintf('型号               价格(元)   月搜索量(千次)\\n');
+fprintf('---------------------------------------------\\n');
+for i = 1:num_ics
+    fprintf('%-15s   %6.2f        %8.1f\\n', ...
+        ic_names{i}, ...
+        price_data(i, end), ...
+        heat_data(i, end)/1000);
+end
+
+fprintf('\\n支撑位/阻力位:\\n');
+fprintf('型号               支撑位     阻力位\\n');
+fprintf('-------------------------------------\\n');
+for i = 1:num_ics
+    fprintf('%-15s   %6.2f     %6.2f\\n', ...
+        ic_names{i}, ...
+        support_levels(i), ...
+        resistance_levels(i));
+end
+
+fprintf('\\n提示:\\n');
+fprintf('1. 您可以在"参数设置区"修改所有参数\\n');
+fprintf('2. 将脚本中的模拟数据替换为您的真实数据即可使用\\n');`;
+
+            // 显示代码
+            document.getElementById('codePreview').textContent = matlabCode;
+            
+            // 更新状态
+            document.querySelector('.status span').textContent = '代码已生成';
+            document.querySelector('.status-dot').style.background = '#28a745';
+            
+            // 保存代码到全局变量以便下载
+            window.generatedCode = matlabCode;
+        }
+
+        // 重置配置
+        function resetConfig() {
+            if (confirm('确定要重置所有配置吗？')) {
+                // 重置表单
+                document.getElementById('timeScale').value = 'week';
+                document.getElementById('totalDays').value = '365';
+                document.getElementById('startDate').value = '2026-01-01';
+                document.getElementById('showGrid').checked = true;
+                document.getElementById('showSupport').checked = true;
+                document.getElementById('lineWidth').value = '2.5';
+                
+                // 重置IC列表
+                ics = [
+                    { name: 'STM32F103', color: '#3366CC', basePrice: 8.5, support: 7.0, resistance: 10.0, baseHeat: 50000 },
+                    { name: 'ATmega328P', color: '#DC3912', basePrice: 3.2, support: 2.5, resistance: 4.0, baseHeat: 30000 },
+                    { name: 'ESP32', color: '#FF9900', basePrice: 12.8, support: 10.0, resistance: 15.0, baseHeat: 80000 }
+                ];
+                initICList();
+                
+                // 重置代码预览
+                document.getElementById('codePreview').textContent = `%% 请先配置参数，然后点击"生成MATLAB代码"按钮
+%% 这里将显示生成的MATLAB代码
+
+% 当前配置：
+% - 时间尺度：周
+% - IC型号：STM32F103, ATmega328P, ESP32
+% - 总天数：365
+% - 起始日期：2026-01-01
+
+% 点击生成按钮开始...`;
+                
+                // 更新状态
+                document.querySelector('.status span').textContent = '已重置';
+                document.querySelector('.status-dot').style.background = '#ffc107';
+                setTimeout(() => {
+                    document.querySelector('.status span').textContent = '就绪';
+                    document.querySelector('.status-dot').style.background = '#28a745';
+                }, 2000);
+            }
+        }
+
+        // 下载代码
+        function downloadCode() {
+            if (!window.generatedCode) {
+                alert('请先生成MATLAB代码！');
+                return;
+            }
+            
+            const blob = new Blob([window.generatedCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ic_3d_price_trend.m';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // 更新状态
+            document.querySelector('.status span').textContent = '文件已下载';
+            document.querySelector('.status-dot').style.background = '#17a2b8';
+            setTimeout(() => {
+                document.querySelector('.status span').textContent = '就绪';
+                document.querySelector('.status-dot').style.background = '#28a745';
+            }, 2000);
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            initICList();
+        };
+    </script>
+</body>
+</html>
